@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями - CRUD Dialogs Demo</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .users-table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .btn-create {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-action {
+            padding: 5px 10px;
+            margin: 0 3px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            border-top: none;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .badge-role {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .badge-admin {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .badge-user {
+            background: #dfe6e9;
+            color: #636e72;
+        }
+
+        .badge-moderator {
+            background: #74b9ff;
+            color: #0984e3;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 35px;
+            border-radius: 25px;
+            border: 2px solid #e0e0e0;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #667eea;
+            box-shadow: none;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .showing-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10001;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="text-center">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+        <p class="mt-2">Загрузка...</p>
+    </div>
+</div>
+
+<!-- Notification Container -->
+<div id="notificationContainer"></div>
+
+<!-- Main Container -->
+<div class="main-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1><i class="bi bi-people-fill"></i> Управление пользователями</h1>
+                <p class="text-muted mb-0">Демонстрация библиотеки CRUD Dialogs</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-light me-2" onclick="refreshUsers()">
+                    <i class="bi bi-arrow-clockwise"></i> Обновить
+                </button>
+                <button class="btn btn-create text-white" onclick="openCreateDialog()">
+                    <i class="bi bi-plus-lg"></i> Добавить пользователя
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number" id="totalUsers">0</div>
+            <div class="stat-label">Всего пользователей</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="activeUsers">0</div>
+            <div class="stat-label">Активных</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="adminUsers">0</div>
+            <div class="stat-label">Администраторов</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="newUsers">0</div>
+            <div class="stat-label">Новых за неделю</div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="users-table-container">
+        <div class="table-header">
+            <h2><i class="bi bi-table"></i> Список пользователей</h2>
+            <div class="d-flex gap-3">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="form-control" id="searchInput"
+                           placeholder="Поиск пользователей..." onkeyup="filterUsers()">
+                </div>
+                <select class="form-select" style="width: auto;" id="roleFilter" onchange="filterUsers()">
+                    <option value="all">Все роли</option>
+                    <option value="admin">Администратор</option>
+                    <option value="user">Пользователь</option>
+                    <option value="moderator">Модератор</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Email</th>
+                    <th>Роль</th>
+                    <th>Статус</th>
+                    <th>Дата создания</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                <!-- Users will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="bi bi-people"></i>
+            <h4>Пользователи не найдены</h4>
+            <p>Создайте нового пользователя или измените параметры поиска</p>
+        </div>
+
+        <div class="pagination-container">
+            <div class="showing-text" id="showingText">
+                Показано 0 из 0 пользователей
+            </div>
+            <nav>
+                <ul class="pagination mb-0" id="pagination">
+                    <!-- Pagination will be generated here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- DOM библиотека -->
+<script type="text/javascript" src="dom.js"></script>
+
+<!-- CRUD Dialogs библиотека -->
+<script type="text/javascript" src="crud_d.js"></script>
+
+<script>
+    // ============ Инициализация приложения ============
+
+    // Состояние приложения
+    let users = [];
+    let filteredUsers = [];
+    let currentPage = 1;
+    const usersPerPage = 10;
+
+    // Mock API с задержкой для реалистичности
+    const MockAPI = {
+        users: [],
+
+        init() {
+            // Генерируем тестовых пользователей
+            const firstNames = ['Анна', 'Иван', 'Мария', 'Петр', 'Елена', 'Алексей', 'Ольга', 'Дмитрий',
+                'Наталья', 'Сергей', 'Екатерина', 'Андрей', 'Татьяна', 'Максим', 'Юлия'];
+            const lastNames = ['Иванова', 'Петров', 'Сидорова', 'Козлов', 'Смирнова', 'Кузнецов',
+                'Попова', 'Васильев', 'Морозова', 'Новиков', 'Федорова', 'Зайцев'];
+            const roles = ['user', 'admin', 'moderator'];
+            const statuses = ['active', 'inactive', 'blocked'];
+
+            for (let i = 1; i <= 50; i++) {
+                const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+                const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+                const role = roles[Math.floor(Math.random() * roles.length)];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+                this.users.push({
+                    id: i,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@example.com`,
+                    phone: `+7 (999) ${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 90) + 10)}-${String(Math.floor(Math.random() * 90) + 10)}`,
+                    role: role,
+                    status: status,
+                    description: `Описание пользователя ${firstName} ${lastName}`,
+                    birth_date: `${String(Math.floor(Math.random() * 30) + 1970)}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+                    created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    address: `ул. ${['Ленина', 'Пушкина', 'Гагарина', 'Мира'][Math.floor(Math.random() * 4)]}, д. ${Math.floor(Math.random() * 100) + 1}`
+                });
+            }
+        },
+
+        async getUsers() {
+            await this.delay(500 + Math.random() * 1000);
+            return [...this.users];
+        },
+
+        async getUser(id) {
+            await this.delay(300 + Math.random() * 500);
+            const user = this.users.find(u => u.id === id);
+            if (!user) throw new Error('Пользователь не найден');
+            return {...user};
+        },
+
+        async createUser(data) {
+            await this.delay(500 + Math.random() * 1000);
+            const newUser = {
+                id: Math.max(...this.users.map(u => u.id)) + 1,
+                ...data,
+                created_at: new Date().toISOString()
+            };
+            this.users.unshift(newUser);
+            return newUser;
+        },
+
+        async updateUser(id, data) {
+            await this.delay(500 + Math.random() * 1000);
+            const index = this.users.findIndex(u => u.id === id);
+            if (index === -1) throw new Error('Пользователь не найден');
+            this.users[index] = { ...this.users[index], ...data };
+            return this.users[index];
+        },
+
+        async deleteUser(id) {
+            await this.delay(500 + Math.random() * 1000);
+            const index = this.users.findIndex(u => u.id === id);
+            if (index === -1) throw new Error('Пользователь не найден');
+            this.users.splice(index, 1);
+            return { success: true };
+        },
+
+        delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    };
+
+    // Переопределяем fetch для использования Mock API
+    window.fetch = async function(url, options = {}) {
+        const method = options.method || 'GET';
+        const body = options.body ? JSON.parse(options.body) : null;
+
+        // GET /api/users
+        if (url === '/api/users' && method === 'GET') {
+            const users = await MockAPI.getUsers();
+            return new Response(JSON.stringify(users), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // GET /api/users/{id}
+        const getMatch = url.match(/\/api\/users\/(\d+)/);
+        if (getMatch && method === 'GET') {
+            try {
+                const user = await MockAPI.getUser(parseInt(getMatch[1]));
+                return new Response(JSON.stringify(user), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } catch (error) {
+                return new Response(JSON.stringify({ message: error.message }), {
+                    status: 404,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        }
+
+        // POST /api/users
+        if (url === '/api/users' && method === 'POST') {
+            const user = await MockAPI.createUser(body);
+            return new Response(JSON.stringify(user), {
+                status: 201,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // PUT /api/users/{id}
+        const putMatch = url.match(/\/api\/users\/(\d+)/);
+        if (putMatch && method === 'PUT') {
+            try {
+                const user = await MockAPI.updateUser(parseInt(putMatch[1]), body);
+                return new Response(JSON.stringify(user), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } catch (error) {
+                return new Response(JSON.stringify({ message: error.message }), {
+                    status: 404,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        }
+
+        // DELETE /api/users/{id}
+        const deleteMatch = url.match(/\/api\/users\/(\d+)/);
+        if (deleteMatch && method === 'DELETE') {
+            try {
+                await MockAPI.deleteUser(parseInt(deleteMatch[1]));
+                return new Response(JSON.stringify({ success: true }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } catch (error) {
+                return new Response(JSON.stringify({ message: error.message }), {
+                    status: 404,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        }
+
+        return new Response(JSON.stringify({ message: 'Not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    };
+
+    // Инициализация Mock API
+    MockAPI.init();
+
+    // ============ Инициализация диалогов ============
+
+    // Создаем диалог для пользователей
+    const userDialog = crud_d.makeDialog('user_management', {
+        first_name: ['text', {
+            label: 'Имя',
+            required: true,
+            placeholder: 'Введите имя'
+        }, ''],
+        last_name: ['text', {
+            label: 'Фамилия',
+            required: true,
+            placeholder: 'Введите фамилию'
+        }, ''],
+        email: ['email', {
+            label: 'Email',
+            required: true,
+            placeholder: 'user@example.com'
+        }, ''],
+        phone: ['text', {
+            label: 'Телефон',
+            placeholder: '+7 (999) 123-45-67'
+        }, ''],
+        role: ['select', {
+            label: 'Роль',
+            required: true,
+            options: [
+                { value: 'user', label: '👤 Пользователь' },
+                { value: 'moderator', label: '🛡️ Модератор' },
+                { value: 'admin', label: '👑 Администратор' }
+            ]
+        }, 'user'],
+        status: ['select', {
+            label: 'Статус',
+            required: true,
+            options: [
+                { value: 'active', label: '🟢 Активен' },
+                { value: 'inactive', label: '🟡 Неактивен' },
+                { value: 'blocked', label: '🔴 Заблокирован' }
+            ]
+        }, 'active'],
+        birth_date: ['date', {
+            label: 'Дата рождения'
+        }, ''],
+        address: ['text', {
+            label: 'Адрес',
+            placeholder: 'ул. Примерная, д. 1'
+        }, ''],
+        description: ['textarea', {
+            label: 'Описание',
+            rows: 3,
+            placeholder: 'Дополнительная информация о пользователе'
+        }, '']
+    }, {
+        width: 'lg',
+        categories: {
+            'Основная информация': [
+                ['first_name', 'last_name'],
+                ['email', 'phone'],
+                ['role', 'status']
+            ],
+            'Дополнительно': [
+                ['birth_date'],
+                ['address'],
+                ['description']
+            ]
+        }
+    });
+
+    // Устанавливаем эндпоинты
+    userDialog
+        .setCreateEndpoint('/api/users')
+        .setGetEndpoint('/api/users/{id}')
+        .setUpdateEndpoint('/api/users/{id}')
+        .setDeleteEndpoint('/api/users/{id}');
+
+    // ============ Функции для работы с таблицей ============
+
+    function loadUsers() {
+        showLoading();
+
+        fetch('/api/users')
+            .then(response => response.json())
+            .then(data => {
+                users = data;
+                applyFilters();
+                updateStats();
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки:', error);
+                showNotification('Ошибка загрузки пользователей', 'danger');
+                hideLoading();
+            });
+    }
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+
+        filteredUsers = users.filter(user => {
+            const matchesSearch =
+                user.first_name.toLowerCase().includes(searchTerm) ||
+                user.last_name.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.phone.toLowerCase().includes(searchTerm);
+
+            const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+
+            return matchesSearch && matchesRole;
+        });
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    function filterUsers() {
+        applyFilters();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('usersTableBody');
+        const emptyState = document.getElementById('emptyState');
+        const table = document.querySelector('.table');
+
+        if (filteredUsers.length === 0) {
+            tbody.innerHTML = '';
+            emptyState.style.display = 'block';
+            table.style.display = 'none';
+            updatePagination(0);
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        table.style.display = 'table';
+
+        const startIndex = (currentPage - 1) * usersPerPage;
+        const endIndex = startIndex + usersPerPage;
+        const pageUsers = filteredUsers.slice(startIndex, endIndex);
+
+        tbody.innerHTML = pageUsers.map(user => `
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                ${user.first_name[0]}${user.last_name[0]}
+                            </div>
+                            <div>
+                                <strong>${user.first_name} ${user.last_name}</strong>
+                                <br>
+                                <small class="text-muted">ID: ${user.id}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <i class="bi bi-envelope"></i> ${user.email}
+                        ${user.phone ? `<br><i class="bi bi-phone"></i> ${user.phone}` : ''}
+                    </td>
+                    <td>
+                        <span class="badge-role badge-${user.role}">
+                            ${getRoleLabel(user.role)}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${getStatusColor(user.status)}">
+                            ${getStatusLabel(user.status)}
+                        </span>
+                    </td>
+                    <td>
+                        <small>${formatDate(user.created_at)}</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary btn-action"
+                                onclick="openEditDialog(${user.id})"
+                                title="Редактировать">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info btn-action"
+                                onclick="viewUser(${user.id})"
+                                title="Просмотр">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+        updatePagination(filteredUsers.length);
+        updateShowingText(startIndex + 1, Math.min(endIndex, filteredUsers.length), filteredUsers.length);
+    }
+
+    function updatePagination(totalItems) {
+        const totalPages = Math.ceil(totalItems / usersPerPage);
+        const pagination = document.getElementById('pagination');
+
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+
+        html += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                html += `
+                        <li class="page-item ${currentPage === i ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                        </li>
+                    `;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        html += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+
+        pagination.innerHTML = html;
+    }
+
+    function updateShowingText(start, end, total) {
+        document.getElementById('showingText').textContent =
+            `Показано ${start}-${end} из ${total} пользователей`;
+    }
+
+    function changePage(page) {
+        const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        renderTable();
+        window.scrollTo({ top: document.querySelector('.users-table-container').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function updateStats() {
+        document.getElementById('totalUsers').textContent = users.length;
+        document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+        document.getElementById('adminUsers').textContent = users.filter(u => u.role === 'admin').length;
+
+        const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        document.getElementById('newUsers').textContent =
+            users.filter(u => new Date(u.created_at) > new Date(weekAgo)).length;
+
+        // Анимация чисел
+        document.querySelectorAll('.stat-number').forEach(el => {
+            el.style.transform = 'scale(1.1)';
+            setTimeout(() => el.style.transform = 'scale(1)', 200);
+        });
+    }
+
+    // ============ Диалоговые операции ============
+
+    function openCreateDialog() {
+        userDialog.openCreate('Новый пользователь')
+            .onSuccess(function(result) {
+                showNotification(`Пользователь ${result.first_name} ${result.last_name} успешно создан!`, 'success');
+                loadUsers();
+            })
+            .onError(function(error) {
+                showNotification('Ошибка создания: ' + error.message, 'danger');
+            });
+    }
+
+    function openEditDialog(userId) {
+        userDialog.openUpdate(userId, 'Редактирование пользователя')
+            .onSuccess(function(result) {
+                showNotification(`Пользователь ${result.first_name} ${result.last_name} обновлен!`, 'success');
+                loadUsers();
+            })
+            .onDelete(function(id) {
+                showNotification('Пользователь удален!', 'warning');
+                loadUsers();
+            })
+            .onError(function(error) {
+                showNotification('Ошибка: ' + error.message, 'danger');
+            });
+    }
+
+    function viewUser(userId) {
+        const user = users.find(u => u.id === userId);
+        if (!user) return;
+
+        // Создаем модальное окно для просмотра
+        const modalHtml = `
+                <div class="modal fade" id="viewUserModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-person-circle"></i>
+                                    ${user.first_name} ${user.last_name}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-4">
+                                    <div class="user-avatar mx-auto" style="width: 80px; height: 80px; font-size: 2rem;">
+                                        ${user.first_name[0]}${user.last_name[0]}
+                                    </div>
+                                </div>
+                                <table class="table table-borderless">
+                                    <tr><td><strong>ID:</strong></td><td>${user.id}</td></tr>
+                                    <tr><td><strong>Email:</strong></td><td>${user.email}</td></tr>
+                                    <tr><td><strong>Телефон:</strong></td><td>${user.phone || 'Не указан'}</td></tr>
+                                    <tr><td><strong>Роль:</strong></td><td>${getRoleLabel(user.role)}</td></tr>
+                                    <tr><td><strong>Статус:</strong></td><td>${getStatusLabel(user.status)}</td></tr>
+                                    <tr><td><strong>Дата рождения:</strong></td><td>${user.birth_date || 'Не указана'}</td></tr>
+                                    <tr><td><strong>Адрес:</strong></td><td>${user.address || 'Не указан'}</td></tr>
+                                    <tr><td><strong>Описание:</strong></td><td>${user.description || 'Нет описания'}</td></tr>
+                                    <tr><td><strong>Создан:</strong></td><td>${formatDate(user.created_at)}</td></tr>
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Закрыть
+                                </button>
+                                <button type="button" class="btn btn-primary"
+                                        onclick="bootstrap.Modal.getInstance(document.getElementById('viewUserModal')).hide(); openEditDialog(${user.id})">
+                                    <i class="bi bi-pencil"></i> Редактировать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+        // Удаляем предыдущее окно просмотра если есть
+        const existingModal = document.getElementById('viewUserModal');
+        if (existingModal) existingModal.remove();
+
+        // Добавляем и показываем
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('viewUserModal'));
+        modal.show();
+
+        // Удаляем после закрытия
+        document.getElementById('viewUserModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+
+    function refreshUsers() {
+        loadUsers();
+        showNotification('Данные обновлены', 'info');
+    }
+
+    // ============ Вспомогательные функции ============
+
+    function getRoleLabel(role) {
+        const labels = {
+            'admin': '👑 Администратор',
+            'user': '👤 Пользователь',
+            'moderator': '🛡️ Модератор'
+        };
+        return labels[role] || role;
+    }
+
+    function getStatusLabel(status) {
+        const labels = {
+            'active': 'Активен',
+            'inactive': 'Неактивен',
+            'blocked': 'Заблокирован'
+        };
+        return labels[status] || status;
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            'active': 'success',
+            'inactive': 'warning',
+            'blocked': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function showLoading() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function showNotification(message, type = 'info') {
+        const container = document.getElementById('notificationContainer');
+        const notification = document.createElement('div');
+
+        const icons = {
+            success: 'check-circle',
+            danger: 'exclamation-circle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
+        };
+
+        notification.className = `notification alert alert-${type} alert-dismissible fade show`;
+        notification.innerHTML = `
+                <i class="bi bi-${icons[type] || 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+        container.appendChild(notification);
+
+        // Автоматическое удаление через 3 секунды
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // ============ Инициализация приложения ============
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUsers();
+
+        // Горячие клавиши
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+N - новый пользователь
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                openCreateDialog();
+            }
+            // Ctrl+R - обновить
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                refreshUsers();
+            }
+            // Escape - закрыть диалог
+            if (e.key === 'Escape') {
+                crud_d.closeAll();
+            }
+        });
+
+        console.log('🚀 Приложение "Управление пользователями" запущено');
+        console.log('📝 Горячие клавиши:');
+        console.log('  Ctrl+N - Новый пользователь');
+        console.log('  Ctrl+R - Обновить список');
+        console.log('  Esc - Закрыть все диалоги');
+        console.log('💡 Кликните на пользователя для просмотра деталей');
+    });
+</script>
+</body>
+</html>
